@@ -7,14 +7,14 @@ class App:
     def __init__(self):
         self.clock = pygame.time.Clock()
         self._running = True
-        self._display_surf = None
+        self.display_surf = None
         self.player = None
         self.background = None
-        self.size = self.width, self.height = 864, 768
+        self.size = self.width, self.height = 864,768
 
     def on_init(self):
         pygame.init()
-        self._display_surf = pygame.display.set_mode(self.size)
+        self.display_surf = pygame.display.set_mode(self.size)
         pygame.display.set_caption("Flappy bird AI")
         self.player = Player()
         self.background = Background()
@@ -27,12 +27,10 @@ class App:
     def on_loop(self, event_list):
         self.player.jump(event_list)
 
-
-
     def on_render(self):
-        self._display_surf.blit(self.background.img, (0, 0))
-        self._display_surf.blit(self.player.img, self.player.pos)
-        pygame.display.flip()
+        self.background.draw_inf(self.display_surf)
+        self.player.animate(self.display_surf)
+        pygame.display.update()
 
     def on_cleanup(self):
         pygame.quit()
