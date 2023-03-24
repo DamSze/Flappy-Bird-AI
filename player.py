@@ -11,12 +11,13 @@ class Player(pygame.sprite.Sprite):
         self._wing_audio_path = os.path.join('.\\assets\\audio', 'audio_wing.ogg')
         self._sprite_num = 0
         self._tick = 0
-        self._max_vel = 20
+        self._max_vel = 24
         self._vel = self._max_vel
         self._is_jumping = False
-        self._acc = 1
-        self._gravity = 6.5
-        self.pos = pygame.math.Vector2((100, 404))
+        self._acc = 1.5
+        self._gravity = 6
+        self.rect = self.img_sprites[0].get_rect()
+        self.rect.x, self.rect.y = 100, 404
 
     def jump(self, event_list):
         keys = pygame.key.get_pressed()
@@ -25,12 +26,12 @@ class Player(pygame.sprite.Sprite):
                 self._is_jumping = True
                 self.wing_sound()
         if self._is_jumping:
-            self.pos.y -= self._vel
+            self.rect.y -= self._vel
             self._vel -= self._acc
             if self._vel <= 0:
                 self._is_jumping = False
                 self._vel = self._max_vel
-        self.pos.y += self._gravity
+        self.rect.y += self._gravity
 
     def animate(self, screen):
         if self._sprite_num >= 2:
@@ -40,7 +41,7 @@ class Player(pygame.sprite.Sprite):
         if self._tick >= 60:
             self._tick = 0
         self._tick += 1
-        screen.blit(self.img_sprites[self._sprite_num], self.pos)
+        screen.blit(self.img_sprites[self._sprite_num], self.rect)
 
     def wing_sound(self):
         mixer.music.load(self._wing_audio_path)
