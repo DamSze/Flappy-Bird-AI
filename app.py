@@ -54,17 +54,23 @@ class App:
 
         for x, player in enumerate(self.players):
             player.jump(event_list)
-            if pygame.sprite.spritecollideany(player, self.pipes) or pygame.sprite.collide_rect(player, self.ground):
+            if pygame.sprite.spritecollideany(player, self.pipes):
                 self.ge[x] -= 1
                 self.players.pop(x)
                 self.nets.pop(x)
                 self.ge.pop(x)
-                # self._running = False
+                self._running = False
                 # self.on_execute()
+
+            if pygame.sprite.collide_rect(player, self.ground):
+                self.players.pop(x)
+                self.nets.pop(x)
+                self.ge.pop(x)
 
             for pipe in self.pipes:
                 if pipe.rect.x == player.rect.x:
                     self.score += 0.5
+                    self.ge[x].fitness += 5
 
     def on_render(self):
         self.background.draw_inf(self.display_surf)
