@@ -21,11 +21,10 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self, event_list):
         # keys = pygame.key.get_pressed()
-        for event in event_list:
-            # if event.type == pygame.KEYDOWN and keys[pygame.K_SPACE] and self._is_jumping is False:
-            if self._is_jumping is False:
-                self._is_jumping = True
-                self.wing_sound()
+        if self._is_jumping is False:
+            self._is_jumping = True
+            self.wing_sound()
+
         if self._is_jumping:
             self.rect.y -= self._vel
             self._vel -= self._acc

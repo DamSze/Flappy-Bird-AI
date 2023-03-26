@@ -47,41 +47,48 @@ class App:
             self.on_cleanup()
 
     def on_loop(self, event_list, genomes, config):
-        for x, player in enumerate(self.players):
-            self.ge[x].fitness += 0.6
+        for player in list(self.players):
+            self.ge[self.players.index(player)].fitness += 0.05
             player.move()
-            output = self.nets[x].activate((player.rect.y,
-                                            abs(player.rect.y - self.pipes_up.sprites()[self.pipe_index].rect.y
-                                                + self.pipes_up.sprites()[self.pipe_index].image.get_height()),
-                                            abs(player.rect.y - self.pipes_down.sprites()[self.pipe_index].rect.y
-                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height())))
-            pygame.draw.line(self.display_surf,start_pos=(player.rect.x, player.rect.y), end_pos= (864, 768), color=(255,160,122), width=60)
+            output = self.nets[self.players.index(player)].activate((player.rect.y,
+                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_up.sprites()[self.pipe_index].rect.y
+                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3),
+                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_down.sprites()[self.pipe_index].rect.y
+                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height() + 180)))
+            pygame.draw.line(self.display_surf,start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos= (self.pipes_down.sprites()[self.pipe_index].rect.x, self.pipes_down.sprites()[self.pipe_index].rect.y
+                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height() + 180), color=(255,160,122), width=1)
+            pygame.draw.line(self.display_surf, start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos=(
+            self.pipes_up.sprites()[self.pipe_index].rect.x, self.pipes_up.sprites()[self.pipe_index].rect.y
+                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3), color=(240,248,255), width=1)
+            pygame.display.update()
             if output[0] > 0.5:
                 player.jump(event_list)
 
             if pygame.sprite.spritecollideany(player, self.pipes_down) or pygame.sprite.spritecollideany(player, self.pipes_up):
-                self.ge[x].fitness -= 1
-                self.players.pop(x)
-                self.nets.pop(x)
-                self.ge.pop(x)
+                self.ge[self.players.index(player)].fitness -= 1
+                self.nets.pop(self.players.index(player))
+                self.ge.pop(self.players.index(player))
+                self.players.pop(self.players.index(player))
                 # self._running = False
                 # self.on_execute()
 
-            if pygame.sprite.collide_rect(player, self.ground) or player.rect.x - player.img_sprites[0].get_height() >= 768:
-                self.players.pop(x)
-                self.nets.pop(x)
-                self.ge.pop(x)
+            if pygame.sprite.collide_rect(player, self.ground) or player.rect.y <= 0:
+                self.nets.pop(self.players.index(player))
+                self.ge.pop(self.players.index(player))
+                self.players.pop(self.players.index(player))
 
             for pipe in self.pipes_down:
                 if pipe.rect.x == player.rect.x:
-                    self.ge[x].fitness += 5
+                    self.ge[self.players.index(player)].fitness += 5
 
-        for pipe in self.pipes_down:
-            if len(self.players) > 0:
-                if pipe.rect.x == self.players[0].rect.x:
-                    self.score += 0.5
-            else:
-                self._running = False
+        if len(self.players) > 0:
+            print(self.ge[0].fitness)
+
+        if len(self.players) > 0:
+            if self.pipes_down.sprites()[self.pipe_index].rect.x == self.players[0].rect.x:
+                self.score += 1
+        else:
+            self._running = False
 
     def on_render(self):
         self.background.draw_inf(self.display_surf)
