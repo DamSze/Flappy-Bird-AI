@@ -32,6 +32,8 @@ class Player(pygame.sprite.Sprite):
             if self._vel <= 0:
                 self._is_jumping = False
                 self._vel = self._max_vel
+
+    def move(self):
         self.rect.y += self._gravity
 
     def animate(self, screen):
