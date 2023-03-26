@@ -4,6 +4,8 @@ from background import Background
 import random
 from pipe import Pipe
 from ground import Ground
+import os
+import neat
 
 
 class App:
@@ -11,7 +13,7 @@ class App:
         self.clock = pygame.time.Clock()
         self._running = True
         self.display_surf = None
-        self.player = None
+        self.players = []
         self.background = None
         self.pipes = None
         self.score = None
@@ -19,33 +21,50 @@ class App:
         self.size = self.width, self.height = 864, 768
         self.timer = None
 
+        self.local_dir = None
+        self.config_path = None
+        self.nets = []
+        self.ge = []
+
     def on_init(self):
         pygame.init()
         self.display_surf = pygame.display.set_mode(self.size)
         pygame.display.set_caption("Flappy bird AI")
-        self.player = Player()
+        self.player = []
         self.background = Background()
         self.pipes = pygame.sprite.Group()
         self.ground = Ground()
         self._running = True
         self.timer = 0
         self.score = 0
+        self.local_dir = os.path.dirname(__file__)
+        self.config_path = os.path.join(self.local_dir, 'config.txt')
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             self._running = False
 
-    def on_loop(self, event_list):
-        self.player.jump(event_list)
-        if pygame.sprite.spritecollideany(self.player, self.pipes):
-            self._running = False
+    def on_loop(self, event_list, genomes, config):
+        for g in genomes:
+            net = neat.nn.FeedForwardNetwork(g, config)
+            self.nets.append(net)
+            self.players.append(Player())
+            g.fitness = 0
+            self.ge.append(g)
 
-        if pygame.sprite.collide_rect(self.player, self.ground):
-            self._running = False
+        for x, player in enumerate(self.players):
+            player.jump(event_list)
+            if pygame.sprite.spritecollideany(player, self.pipes) or pygame.sprite.collide_rect(player, self.ground):
+                self.ge[x] -= 1
+                self.players.pop(x)
+                self.nets.pop(x)
+                self.ge.pop(x)
+                # self._running = False
+                # self.on_execute()
 
-        for pipe in self.pipes:
-            if pipe.rect.x == self.player.rect.x:
-                self.score += 0.5
+            for pipe in self.pipes:
+                if pipe.rect.x == player.rect.x:
+                    self.score += 0.5
 
     def on_render(self):
         self.background.draw_inf(self.display_surf)
@@ -74,7 +93,18 @@ class App:
     def on_cleanup(self):
         pygame.quit()
 
-    def on_execute(self):
+    def run(self):
+        config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                    neat.DefaultSpeciesSet, neat. DefaultStagnation,
+                                    self.config_path)
+        pop = neat.Population(config)
+        pop.add_reporter(neat.StdOutReporter(True))
+        stats = neat.StatisticsReporter()
+        pop.add_reporter(stats)
+
+        winner = pop.run(self.on_execute(), 50)
+
+    def on_execute(self, genomes, config):
         if self.on_init() is False:
             self._running = False
 
@@ -86,4 +116,4 @@ class App:
             self.on_loop(event_list)
             self.on_render()
 
-        self.on_cleanup()
+        # self.on_cleanup()
