@@ -82,9 +82,6 @@ class App:
                     self.ge[self.players.index(player)].fitness += 5
 
         if len(self.players) > 0:
-            print(self.ge[0].fitness)
-
-        if len(self.players) > 0:
             if self.pipes_down.sprites()[self.pipe_index].rect.x == self.players[0].rect.x:
                 self.score += 1
         else:
