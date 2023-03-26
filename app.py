@@ -47,6 +47,9 @@ class App:
             if pipe.rect.x == self.player.rect.x:
                 self.score += 0.5
 
+            if pipe.rect.x + pipe.image.get_width() < 0:
+                pipe.kill()
+
     def on_render(self):
         self.background.draw_inf(self.display_surf)
         self.pipes.draw(self.display_surf)
