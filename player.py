@@ -22,18 +22,19 @@ class Player(pygame.sprite.Sprite):
         self.cooldown = 0
     def jump(self, event_list):
         # keys = pygame.key.get_pressed()
-        if self._is_jumping is False and abs(time.time()-self.cooldown) >= 0.4:
+        if self._is_jumping is False:
             self._is_jumping = True
             self.cooldown = time.time()
-            self.wing_sound()
+            # self.wing_sound()
 
         if self._is_jumping:
             self.rect.y -= self._vel
             self._vel -= self._acc
-            if self._vel <= 0:
+            print(self._vel)
+            if self._vel <= -(self._max_vel/2):
                 self._is_jumping = False
                 self._vel = self._max_vel
-        self.rect.y += self._gravity
+            # self.rect.y += self._gravity
 
     def move(self):
         self.rect.y += self._gravity
