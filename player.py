@@ -30,8 +30,8 @@ class Player(pygame.sprite.Sprite):
         if self._is_jumping:
             self.rect.y -= self._vel
             self._vel -= self._acc
-            print(self._vel)
-            if self._vel <= -(self._max_vel/2):
+            # print(self._vel)
+            if self._vel <= -(self._max_vel/4):
                 self._is_jumping = False
                 self._vel = self._max_vel
             # self.rect.y += self._gravity

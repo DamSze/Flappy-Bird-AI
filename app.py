@@ -26,7 +26,7 @@ class App:
         self.nets = []
         self.ge = []
         self.pipe_index = None
-        self.pipe_gap = 180
+        self.pipe_gap = 150
 
     def on_init(self):
         pygame.init()
@@ -52,14 +52,15 @@ class App:
             self.ge[self.players.index(player)].fitness += 0.05
             output = self.nets[self.players.index(player)].activate((player.rect.y,
                                             abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_up.sprites()[self.pipe_index].rect.y
-                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.11),
+                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.73),
                                             abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_down.sprites()[self.pipe_index].rect.y
                                                 + self.pipes_down.sprites()[self.pipe_index].image.get_height() + self.pipe_gap)))
             pygame.draw.line(self.display_surf,start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos= (self.pipes_down.sprites()[self.pipe_index].rect.x, self.pipes_down.sprites()[self.pipe_index].rect.y
                                                 + self.pipes_down.sprites()[self.pipe_index].image.get_height() + self.pipe_gap), color=(255,160,122), width=1)
+
             pygame.draw.line(self.display_surf, start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos=(
             self.pipes_up.sprites()[self.pipe_index].rect.x, self.pipes_up.sprites()[self.pipe_index].rect.y
-                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.11), color=(240,248,255), width=1)
+                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.73), color=(240,248,255), width=1)
             pygame.display.update()
             if output[0] > 0.5:
                 player.jump(event_list)
@@ -67,7 +68,6 @@ class App:
             player.move()
             if len(self.players) == 0:
                 self._running = False
-                break
 
 
             if pygame.sprite.spritecollideany(player, self.pipes_down) or pygame.sprite.spritecollideany(player, self.pipes_up):
