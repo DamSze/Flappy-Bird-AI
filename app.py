@@ -15,69 +15,77 @@ class App:
         self.display_surf = None
         self.players = []
         self.background = None
-        self.pipes = None
+        self.pipes_down = None
+        self.pipes_up = None
         self.score = None
         self.ground = None
         self.size = self.width, self.height = 864, 768
         self.timer = None
 
-        self.local_dir = None
         self.config_path = None
         self.nets = []
         self.ge = []
+        self.pipe_index = None
 
     def on_init(self):
         pygame.init()
         self.display_surf = pygame.display.set_mode(self.size)
         pygame.display.set_caption("Flappy bird AI")
-        self.player = []
+        self.players = []
         self.background = Background()
-        self.pipes = pygame.sprite.Group()
+        self.pipes_up = pygame.sprite.Group()
+        self.pipes_down = pygame.sprite.Group()
         self.ground = Ground()
         self._running = True
         self.timer = 0
         self.score = 0
-        self.local_dir = os.path.dirname(__file__)
-        self.config_path = os.path.join(self.local_dir, 'config.txt')
+        self.pipe_index = 0
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             self._running = False
+            self.on_cleanup()
 
     def on_loop(self, event_list, genomes, config):
-        for g in genomes:
-            net = neat.nn.FeedForwardNetwork(g, config)
-            self.nets.append(net)
-            self.players.append(Player())
-            g.fitness = 0
-            self.ge.append(g)
-
+        self.get_pipe_index()
         for x, player in enumerate(self.players):
-            player.jump(event_list)
-            if pygame.sprite.spritecollideany(player, self.pipes):
-                self.ge[x] -= 1
+            self.ge[x].fitness += 0.1
+            output = self.nets[x].activate((player.rect.y,
+                                            abs(player.rect.x - self.pipes_up.sprites()[self.pipe_index].rect.y
+                                                + self.pipes_up.sprites()[self.pipe_index].image.get_height()),
+                                            abs(player.rect.x - self.pipes_down.sprites()[self.pipe_index].rect.y
+                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height())))
+            if output[0] > 0.5:
+                player.jump(event_list)
+            if pygame.sprite.spritecollideany(player, self.pipes_down) or pygame.sprite.spritecollideany(player, self.pipes_up):
+                self.ge[x].fitness -= 1
                 self.players.pop(x)
                 self.nets.pop(x)
                 self.ge.pop(x)
-                self._running = False
+                # self._running = False
                 # self.on_execute()
 
-            if pygame.sprite.collide_rect(player, self.ground):
+            if pygame.sprite.collide_rect(player, self.ground) or player.rect.x - player.img_sprites[0].get_height() >= 768:
                 self.players.pop(x)
                 self.nets.pop(x)
                 self.ge.pop(x)
 
-            for pipe in self.pipes:
+            for pipe in self.pipes_down:
                 if pipe.rect.x == player.rect.x:
-                    self.score += 0.5
                     self.ge[x].fitness += 5
+        for pipe in self.pipes_down:
+            if pipe.rect.x == self.players[0].rect.x:
+                self.score += 0.5
 
     def on_render(self):
         self.background.draw_inf(self.display_surf)
-        self.pipes.draw(self.display_surf)
-        self.pipes.update()
+        self.pipes_up.draw(self.display_surf)
+        self.pipes_down.draw(self.display_surf)
+        self.pipes_up.update()
+        self.pipes_down.update()
         self.ground.draw(self.display_surf)
-        self.player.animate(self.display_surf)
+        for player in self.players:
+            player.animate(self.display_surf)
 
         myfont = pygame.font.SysFont("monospace", 40)
 
@@ -89,8 +97,8 @@ class App:
             x_top, x_bottom = 880, 880
             y_bottom = random.randint(-400, -100)
             y_top = y_bottom + 180 + 560
-            self.pipes.add(Pipe(x_top, y_top, 'pipe.png'))
-            self.pipes.add(Pipe(x_bottom, y_bottom, 'pipe_dwn.png'))
+            self.pipes_up.add(Pipe(x_top, y_top, 'pipe_up.png'))
+            self.pipes_down.add(Pipe(x_bottom, y_bottom, 'pipe_dwn.png'))
             self.timer = random.randint(140, 200)
         self.timer -= 1
 
@@ -99,27 +107,43 @@ class App:
     def on_cleanup(self):
         pygame.quit()
 
+    def get_pipe_index(self):
+        if len(self.players) > 0:
+            if len(self.pipes_down.sprites()) > 1 and self.players[0].rect.x > self.pipes_down.sprites()[0].rect.x + self.pipes_down.sprites()[0].image.get_width():
+                self.pipe_index = 1
+        else:
+            self._running = False
+
     def run(self):
+        local_dir = os.path.dirname(__file__)
+        config_path = os.path.join(local_dir, 'config.txt')
         config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                     neat.DefaultSpeciesSet, neat. DefaultStagnation,
-                                    self.config_path)
+                                    config_path)
         pop = neat.Population(config)
         pop.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         pop.add_reporter(stats)
 
-        winner = pop.run(self.on_execute(), 50)
+        winner = pop.run(self.on_execute, 50)
 
     def on_execute(self, genomes, config):
         if self.on_init() is False:
             self._running = False
+
+        for _, g in genomes:
+            net = neat.nn.FeedForwardNetwork.create(g, config)
+            self.nets.append(net)
+            self.players.append(Player())
+            g.fitness = 0
+            self.ge.append(g)
 
         while self._running:
             self.clock.tick(60)
             event_list = pygame.event.get()
             for event in event_list:
                 self.on_event(event)
-            self.on_loop(event_list)
             self.on_render()
+            self.on_loop(event_list, genomes, config)
 
         # self.on_cleanup()
