@@ -1,6 +1,7 @@
 import pygame
 from pygame import mixer
 import os
+import time
 
 
 class Player(pygame.sprite.Sprite):
@@ -18,19 +19,21 @@ class Player(pygame.sprite.Sprite):
         self._gravity = 6
         self.rect = self.img_sprites[0].get_rect()
         self.rect.x, self.rect.y = 100, 404
-
+        self.cooldown = 0
     def jump(self, event_list):
-        keys = pygame.key.get_pressed()
-        for event in event_list:
-            if event.type == pygame.KEYDOWN and keys[pygame.K_SPACE] and self._is_jumping is False:
-                self._is_jumping = True
-                self.wing_sound()
+        if self._is_jumping is False:
+            self._is_jumping = True
+            self.cooldown = time.time()
+            # self.wing_sound()
+
         if self._is_jumping:
             self.rect.y -= self._vel
             self._vel -= self._acc
-            if self._vel <= 0:
+            if self._vel <= -(self._max_vel/4):
                 self._is_jumping = False
                 self._vel = self._max_vel
+
+    def move(self):
         self.rect.y += self._gravity
 
     def animate(self, screen):
