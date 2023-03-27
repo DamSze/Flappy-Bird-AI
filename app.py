@@ -23,9 +23,9 @@ class App:
         self.timer = None
 
         self.config_path = None
+        self.pop = None
         self.nets = []
         self.ge = []
-        self.pipe_index = None
         self.pipe_gap = 150
 
     def on_init(self):
@@ -40,7 +40,6 @@ class App:
         self._running = True
         self.timer = 0
         self.score = 0
-        self.pipe_index = 0
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -51,17 +50,10 @@ class App:
         for player in list(self.players):
             self.ge[self.players.index(player)].fitness += 0.05
             output = self.nets[self.players.index(player)].activate((player.rect.y,
-                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_up.sprites()[self.pipe_index].rect.y
-                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.73),
-                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_down.sprites()[self.pipe_index].rect.y
-                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height() + self.pipe_gap)))
-            pygame.draw.line(self.display_surf,start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos= (self.pipes_down.sprites()[self.pipe_index].rect.x, self.pipes_down.sprites()[self.pipe_index].rect.y
-                                                + self.pipes_down.sprites()[self.pipe_index].image.get_height() + self.pipe_gap), color=(255,160,122), width=1)
-
-            pygame.draw.line(self.display_surf, start_pos=(player.rect.x + player.img_sprites[0].get_width()/2, player.rect.y + player.img_sprites[0].get_height()/2), end_pos=(
-            self.pipes_up.sprites()[self.pipe_index].rect.x, self.pipes_up.sprites()[self.pipe_index].rect.y
-                                                - self.pipes_up.sprites()[self.pipe_index].image.get_height()/3.73), color=(240,248,255), width=1)
-            pygame.display.update()
+                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_up.sprites()[0].rect.y
+                                                - self.pipes_up.sprites()[0].image.get_height()/3.73),
+                                            abs(player.rect.y + player.img_sprites[0].get_height()/2 - self.pipes_down.sprites()[0].rect.y
+                                                + self.pipes_down.sprites()[0].image.get_height() + self.pipe_gap)))
             if output[0] > 0.5:
                 player.jump(event_list)
 
@@ -75,8 +67,6 @@ class App:
                 self.nets.pop(self.players.index(player))
                 self.ge.pop(self.players.index(player))
                 self.players.pop(self.players.index(player))
-                # self._running = False
-                # self.on_execute()
 
             if pygame.sprite.collide_rect(player, self.ground) or player.rect.y <= 0:
                 self.nets.pop(self.players.index(player))
@@ -88,7 +78,7 @@ class App:
                     self.ge[self.players.index(player)].fitness += 5
 
         if len(self.players) > 0:
-            if self.pipes_down.sprites()[self.pipe_index].rect.x == self.players[0].rect.x:
+            if self.pipes_down.sprites()[0].rect.x == self.players[0].rect.x:
                 self.score += 1
         else:
             self._running = False
@@ -100,14 +90,18 @@ class App:
         self.pipes_up.update()
         self.pipes_down.update()
         self.ground.draw(self.display_surf)
-        for player in self.players:
-            player.animate(self.display_surf)
 
         myfont = pygame.font.SysFont("monospace", 40)
 
         # render text
-        label = myfont.render(str(int(self.score)), 1, (255,255,255), (0,0,0))
-        self.display_surf.blit(label, (0, 0))
+        label_score = myfont.render("Score: " + str(int(self.score)), True, (0, 0, 0))
+        self.display_surf.blit(label_score, (500, 0))
+
+        label_pop = myfont.render("Population: " + str(len(self.players)), True, (0, 0, 0))
+        self.display_surf.blit(label_pop, (500, 50))
+
+        label_gen = myfont.render("Generation: " + str(self.pop.generation), True, (0, 0, 0))
+        self.display_surf.blit(label_gen, (500, 100))
 
         if self.timer <= 0:
             x_top, x_bottom = 880, 880
@@ -118,17 +112,28 @@ class App:
             self.timer = random.randint(140, 200)
         self.timer -= 1
 
+        for player in self.players:
+            player.animate(self.display_surf)
+            pygame.draw.line(self.display_surf,
+                             start_pos=(player.rect.x + player.img_sprites[0].get_width()/2,
+                                        player.rect.y + player.img_sprites[0].get_height()/2),
+                             end_pos=(self.pipes_down.sprites()[0].rect.x,
+                                      self.pipes_down.sprites()[0].rect.y
+                                      + self.pipes_down.sprites()[0].image.get_height() + self.pipe_gap),
+                             color=(255, 160, 122), width=1)
+
+            pygame.draw.line(self.display_surf,
+                             start_pos=(player.rect.x + player.img_sprites[0].get_width()/2,
+                                        player.rect.y + player.img_sprites[0].get_height()/2),
+                             end_pos=(self.pipes_up.sprites()[0].rect.x, self.pipes_up.sprites()[0].rect.y
+                                      - self.pipes_up.sprites()[0].image.get_height()/3.73),
+                             color=(240, 248, 255), width=1)
+
         pygame.display.update()
 
     def on_cleanup(self):
         pygame.quit()
 
-    def get_pipe_index(self):
-        if len(self.players) > 0:
-            if len(self.pipes_down.sprites()) > 1 and self.players[0].rect.x > self.pipes_down.sprites()[0].rect.x + self.pipes_down.sprites()[0].image.get_width():
-                self.pipe_index = 1
-        else:
-            self._running = False
 
     def run(self):
         local_dir = os.path.dirname(__file__)
@@ -136,12 +141,12 @@ class App:
         config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                     neat.DefaultSpeciesSet, neat. DefaultStagnation,
                                     config_path)
-        pop = neat.Population(config)
-        pop.add_reporter(neat.StdOutReporter(True))
+        self.pop = neat.Population(config)
+        self.pop.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
-        pop.add_reporter(stats)
+        self.pop.add_reporter(stats)
 
-        winner = pop.run(self.on_execute, 50)
+        winner = self.pop.run(self.on_execute, 50)
 
     def on_execute(self, genomes, config):
         if self.on_init() is False:
