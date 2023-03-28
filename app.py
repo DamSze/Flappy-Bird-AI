@@ -75,8 +75,9 @@ class App:
         pygame.display.update()
 
     def on_cleanup(self):
-        pygame.quit()
-
+        # pygame.quit()
+        self._running = True
+        self.on_execute()
     def on_execute(self):
         if self.on_init() is False:
             self._running = False
