@@ -61,22 +61,24 @@ class App:
             if len(self.players) == 0:
                 self._running = False
 
-
+            # pipe collision
             if pygame.sprite.spritecollideany(player, self.pipes_down) or pygame.sprite.spritecollideany(player, self.pipes_up):
                 self.ge[self.players.index(player)].fitness -= 1
                 self.nets.pop(self.players.index(player))
                 self.ge.pop(self.players.index(player))
                 self.players.pop(self.players.index(player))
-
+            # ground collision and out of screen
             if pygame.sprite.collide_rect(player, self.ground) or player.rect.y <= 0:
                 self.nets.pop(self.players.index(player))
                 self.ge.pop(self.players.index(player))
                 self.players.pop(self.players.index(player))
 
+            # increasing fitness when passing through the pipe
             for pipe in self.pipes_down:
                 if pipe.rect.x == player.rect.x:
                     self.ge[self.players.index(player)].fitness += 5
 
+        # increasing the score
         if len(self.players) > 0:
             if self.pipes_down.sprites()[0].rect.x == self.players[0].rect.x:
                 self.score += 1
@@ -103,6 +105,7 @@ class App:
         label_gen = myfont.render("Generation: " + str(self.pop.generation), True, (0, 0, 0))
         self.display_surf.blit(label_gen, (500, 100))
 
+        # moving pipes
         if self.timer <= 0:
             x_top, x_bottom = 880, 880
             y_bottom = random.randint(-400, -100)
